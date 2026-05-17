@@ -11521,30 +11521,60 @@ body.personal-mode [data-view]:not([data-view="chats"]) {
   /* nav-bottom (profile/logout) — ocultar en mobile, accesible vía Ajustes */
   .nav-bottom, .sidebar-bottom { display: none; }
 
-  /* Topbar más compacto */
+  /* Topbar: 2 filas en mobile (search arriba, extras abajo con scroll horizontal) */
   .topbar {
     padding: 8px 10px;
     gap: 6px;
+    flex-wrap: wrap;
   }
+  /* Ocultar título (el bottom nav ya dice en qué vista estás) */
   .topbar-title {
-    font-size: 15px;
-    flex-shrink: 0;
+    display: none;
   }
+  /* Search ocupa toda la primera fila */
   .topbar-search {
+    flex: 1 1 100%;
     min-width: 0;
-    flex: 1;
+    order: 1;
+    margin: 0;
   }
   .topbar-search input {
     font-size: 14px;
-    padding: 6px 8px;
+    padding: 8px 12px;
+    width: 100%;
   }
-  /* Botones de los extras del topbar — un poco más compactos */
+  /* Extras (view-switcher, sort, filter, etc.) van en la segunda fila, scroll horizontal */
   .topbar-actions, .topbar-pl-extras, .topbar-exp-extras,
   .topbar-customers-extras, .topbar-cal-extras, .topbar-tpl-extras,
   .topbar-bot-extras, .topbar-pedidos-extras {
-    gap: 4px;
+    flex: 1 1 100%;
+    order: 2;
+    gap: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+    padding: 2px 0;
+    margin-left: 0;
+  }
+  .topbar-actions::-webkit-scrollbar,
+  .topbar-pl-extras::-webkit-scrollbar,
+  .topbar-exp-extras::-webkit-scrollbar,
+  .topbar-customers-extras::-webkit-scrollbar,
+  .topbar-cal-extras::-webkit-scrollbar,
+  .topbar-tpl-extras::-webkit-scrollbar,
+  .topbar-bot-extras::-webkit-scrollbar,
+  .topbar-pedidos-extras::-webkit-scrollbar { display: none; }
+  /* Los botones dentro de los extras no se encojen */
+  .topbar-actions > *, .topbar-pl-extras > *, .topbar-exp-extras > *,
+  .topbar-customers-extras > *, .topbar-cal-extras > *, .topbar-tpl-extras > *,
+  .topbar-bot-extras > *, .topbar-pedidos-extras > * {
     flex-shrink: 0;
   }
+  /* Filter btn redondo a la derecha de los extras */
+  .kf-filter-btn { padding: 6px 12px !important; font-size: 12px; }
 
   /* Barra flotante de jobs — un poco más arriba para no chocar con bottom nav */
   .bulk-job-bar {
