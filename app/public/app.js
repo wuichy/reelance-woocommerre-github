@@ -3636,10 +3636,19 @@ async function loadDashboard() {
     const params = new URLSearchParams({ period: _dashPeriod });
     if (_dashAdvisorId) params.set('advisorId', _dashAdvisorId);
     if (_dashCompare) params.set('compare', '1');
-    const d = await api('GET', '/api/analytics/dashboard?' + params.toString());
-    renderDashboard(d);
+    const url = '/api/analytics/dashboard?' + params.toString();
+    console.log('[dashboard] fetching:', url);
+    const d = await api('GET', url);
+    console.log('[dashboard] response:', d);
+    try {
+      renderDashboard(d);
+    } catch (renderErr) {
+      console.error('[dashboard] render error:', renderErr);
+      if (typeof toast === 'function') toast('Error al renderizar dashboard: ' + renderErr.message, 'error', 8000);
+    }
   } catch (err) {
-    console.error('loadDashboard', err);
+    console.error('[dashboard] fetch error:', err);
+    if (typeof toast === 'function') toast('Error cargando dashboard: ' + (err.message || err), 'error', 8000);
   }
 }
 
