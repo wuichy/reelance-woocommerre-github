@@ -13763,10 +13763,7 @@ function renderChatEmptyState() {
     </div>`;
 }
 
-// Botón back en mobile (solo visible <=768px via CSS) — vuelve al listado
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('rhMobileBack')?.addEventListener('click', renderChatEmptyState);
-});
+// El botón back en mobile (rhMobileBackLeft) se maneja en setupMobileChatToggle.
 
 // ─── Banner de activación de notificaciones push en /chats ───
 // Aparece dentro del inbox cuando: el navegador soporta push, no hay subscripción
@@ -19028,10 +19025,16 @@ function setupMobileChatToggle() {
   // Solo aplica si pantalla es mobile (≤720px). Default: ver inbox al entrar a chats.
   setMobileChatView('inbox');
 
-  document.getElementById('rhMobileBackBtn')?.addEventListener('click', () => {
+  // Botón back en mobile (vive en .rh-conversation-header como rhMobileBackLeft).
+  // El id viejo rhMobileBackBtn se mantiene como fallback en caso de cache stale.
+  const backHandler = () => {
     setMobileChatView('inbox');
     toggleChatInfoPanel(false);
-  });
+    // También resetea el chat activo para no quedarnos con la convo "pegada"
+    if (typeof renderChatEmptyState === 'function') renderChatEmptyState();
+  };
+  document.getElementById('rhMobileBackLeft')?.addEventListener('click', backHandler);
+  document.getElementById('rhMobileBackBtn')?.addEventListener('click', backHandler);
 
   // Cuando seleccionas un chat (click en lista), ir a conversation view
   // Lo hacemos con event delegation porque la lista se rendea dinámicamente.

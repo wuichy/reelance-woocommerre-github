@@ -11606,65 +11606,23 @@ body.personal-mode [data-view]:not([data-view="chats"]) {
    MOBILE — vista por vista
    ═══════════════════════════════════════════════════════════════════════ */
 
-/* CHATS — patrón navegador: lista full-screen, al elegir chat slide-in panel */
+/* CHATS — usa el sistema existente data-chat-mobile-view en línea 10444.
+   Aquí solo agregamos polish móvil para header/mensajes/composer. */
 @media (max-width: 768px) {
-  .rh-shell {
-    grid-template-columns: 1fr;
-    position: relative;
-  }
-  .rh-sidebar {
-    width: 100%;
-    height: 100%;
-    border-right: none;
-  }
-  /* Panel de conversación oculto cuando está en empty state */
-  .rh-conversation-panel.rh-empty {
-    display: none;
-  }
-  /* Cuando hay chat seleccionado (no .rh-empty), mostrar panel encima del sidebar */
-  .rh-conversation-panel:not(.rh-empty) {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 10;
-    background: var(--rh-bg);
-  }
-  /* Cuando el panel está visible, ocultar el sidebar para evitar overflow detrás */
-  .rh-shell:has(.rh-conversation-panel:not(.rh-empty)) .rh-sidebar {
-    display: none;
-  }
   .rh-conversation-header {
     padding: 10px 12px;
     gap: 8px;
   }
-  .rh-mobile-back {
-    display: grid;
-    place-items: center;
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: transparent;
-    border-radius: 8px;
-    color: var(--text, #111);
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .rh-mobile-back:hover { background: var(--bg-2, #f3f4f6); }
   .rh-conversation-title { font-size: 14px; }
   .rh-conversation-meta { font-size: 11px; }
-  /* Mensajes con margen reducido */
   .rh-messages, #rhMessages { padding: 8px 10px; }
-  /* Bubble responsivas */
   .msg-bubble, .rh-message-bubble { max-width: 86%; font-size: 14px; }
-  /* Footer del chat (input) — más compacto */
   .rh-reply-form, .rh-composer {
     padding: 8px 10px;
     gap: 6px;
   }
-  /* Search del chat en sidebar */
   .rh-search-wrap input { font-size: 14px; }
 }
-/* Default: ocultar botón back en desktop */
-.rh-mobile-back { display: none; }
 
 /* PIPELINES — kanban scrollable + tabs sticky */
 @media (max-width: 768px) {

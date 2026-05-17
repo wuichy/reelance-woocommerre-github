@@ -375,9 +375,10 @@
             <!-- Panel de conversación -->
             <main class="rh-conversation-panel" id="rhConvPanel">
               <header class="rh-conversation-header">
-                <!-- Botón back solo visible en mobile — vuelve al listado de chats -->
-                <button type="button" class="rh-mobile-back" id="rhMobileBack" aria-label="Volver al listado">
-                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" width="20" height="20"><path d="M13 5l-5 5 5 5"/></svg>
+                <!-- Botón back solo visible en mobile — vuelve al inbox.
+                     Usa el sistema existente data-chat-mobile-view, no renderChatEmptyState. -->
+                <button type="button" class="rh-icon-button rh-mobile-back" id="rhMobileBackLeft" title="Volver al inbox" aria-label="Volver">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
                 <div class="rh-header-av-wrap" id="rhHeaderAvatar">
                   <span class="rh-header-av-initials" id="rhHeaderAvatarInitials"></span>
@@ -403,10 +404,6 @@
                       <div class="rh-ptp-suggest" id="rhPtpSuggest"></div>
                     </div>
                   </div>
-                  <!-- Botón "back to inbox" solo en mobile -->
-                  <button type="button" class="rh-icon-button rh-mobile-back" id="rhMobileBackBtn" title="Volver al inbox" aria-label="Volver">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><polyline points="15 18 9 12 15 6"/></svg>
-                  </button>
                   <!-- Botón "i" — abre panel de info del contacto/lead -->
                   <button type="button" class="rh-icon-button" id="rhChatInfoBtn" title="Info del contacto y lead">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
