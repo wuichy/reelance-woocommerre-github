@@ -3133,9 +3133,102 @@ function closeImportModal() {
   IMPORT_PARSED = [];
 }
 
+// ─── Helpers de CSV: descarga blob + escape de celdas ────────────────
+function _csvEscape(v) {
+  if (v === null || v === undefined) return '';
+  const s = String(v);
+  // Si contiene coma, comilla o salto de línea → envolver en comillas + doblar comillas internas
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+function _downloadCsv(rows, filename) {
+  // BOM al inicio para que Excel detecte UTF-8 con acentos correctamente
+  const csv = '﻿' + rows.map(r => r.map(_csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function setupImport() {
   document.getElementById("importCustomersBtn")?.addEventListener("click", openImportModal);
   document.querySelectorAll("[data-close-import]").forEach((el) => el.addEventListener("click", closeImportModal));
+
+  // Descargar plantilla CSV de ejemplo
+  document.getElementById('downloadImportTemplate')?.addEventListener('click', () => {
+    const rows = [
+      ['nombre', 'apellido', 'email', 'telefono'],
+      ['María', 'González', 'maria@gmail.com', '+52 5512345678'],
+      ['Carlos', 'Ramírez', 'carlos@x.com', '+52 2223334444'],
+      ['Ana', '', 'ana@hotmail.com', '5551112222'],
+      ['Pedro', 'Sánchez', '', '+52 8181234567'],
+    ];
+    _downloadCsv(rows, 'plantilla-contactos-wapi101.csv');
+    toast('Plantilla descargada — ábrela en Excel, llena y vuelve a subirla', 'success', 5000);
+  });
+
+  // Exportar contactos a CSV
+  document.getElementById('exportCustomersBtn')?.addEventListener('click', async () => {
+    try {
+      toast('Generando archivo…', 'info', 3000);
+      // Traer todos los contactos (sin paginación)
+      const data = await api('GET', '/api/contacts?pageSize=5000&page=1');
+      const items = data.items || [];
+      if (!items.length) { toast('No hay contactos para exportar', 'warning'); return; }
+      const rows = [['id', 'nombre', 'apellido', 'email', 'telefono', 'creado']];
+      for (const c of items) {
+        rows.push([
+          c.id,
+          c.firstName || '',
+          c.lastName || '',
+          c.email || '',
+          c.phone || '',
+          c.createdAt ? new Date(c.createdAt * 1000).toISOString().split('T')[0] : '',
+        ]);
+      }
+      const date = new Date().toISOString().split('T')[0];
+      _downloadCsv(rows, `contactos-wapi101-${date}.csv`);
+      toast(`${items.length} contactos exportados`, 'success');
+    } catch (err) {
+      toast('Error exportando: ' + err.message, 'error');
+    }
+  });
+
+  // Exportar leads/expedientes a CSV
+  document.getElementById('expExportBtn')?.addEventListener('click', async () => {
+    try {
+      toast('Generando archivo…', 'info', 3000);
+      const data = await api('GET', '/api/expedients?pageSize=5000&page=1');
+      const items = data.items || [];
+      if (!items.length) { toast('No hay leads para exportar', 'warning'); return; }
+      const rows = [['id', 'nombre_lead', 'contacto', 'telefono', 'email', 'pipeline', 'etapa', 'asesor', 'valor', 'tags', 'creado']];
+      for (const e of items) {
+        rows.push([
+          e.id,
+          e.name || '',
+          e.contactName || '',
+          e.contactPhone || '',
+          e.contactEmail || '',
+          e.pipelineName || '',
+          e.stageName || '',
+          e.assignedAdvisorName || '',
+          e.value || 0,
+          (e.tags || []).join(' | '),
+          e.createdAt ? new Date(e.createdAt * 1000).toISOString().split('T')[0] : '',
+        ]);
+      }
+      const date = new Date().toISOString().split('T')[0];
+      _downloadCsv(rows, `leads-wapi101-${date}.csv`);
+      toast(`${items.length} leads exportados`, 'success');
+    } catch (err) {
+      toast('Error exportando: ' + err.message, 'error');
+    }
+  });
 
   document.querySelectorAll(".import-tab").forEach((tab) => {
     tab.addEventListener("click", () => {

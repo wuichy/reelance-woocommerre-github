@@ -237,6 +237,7 @@
             </div>
           </div>
           <button class="btn btn--ghost" id="expImportBtn" data-i18n="btn.import">Importar</button>
+          <button class="btn btn--ghost" id="expExportBtn" title="Descargar leads en CSV">Exportar</button>
           <button class="btn btn--ghost" id="expFieldsBtn" title="Campos personalizados">Campos</button>
           <button class="btn btn--primary" id="expAddBtn" data-i18n="exp.new">+ Nuevo lead</button>
         </div>
@@ -263,6 +264,10 @@
           <button class="btn btn--ghost" id="importCustomersBtn" data-i18n-inner="btn.import">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             Importar
+          </button>
+          <button class="btn btn--ghost" id="exportCustomersBtn" title="Descargar contactos en CSV">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;margin-right:6px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Exportar
           </button>
           <button class="btn btn--primary" id="newCustomerBtn" data-i18n="contact.new">+ Nuevo contacto</button>
         </div>
@@ -1270,6 +1275,13 @@ Ana, , ana@hotmail.com, 5551112222</pre>
               <div class="import-help">
                 Acepta <strong>CSV</strong> (<code>.csv</code> o <code>.txt</code>). Si tu archivo es de <strong>Excel</strong>, ábrelo y haz <em>Archivo → Guardar como → CSV (delimitado por comas)</em>.
                 <br/>Detecto automáticamente el separador y, si la primera línea tiene encabezados (nombre, email, etc.), la ignoro.
+              </div>
+              <div class="import-template-link">
+                ¿No tienes archivo?
+                <button type="button" class="link-btn" id="downloadImportTemplate">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Descargar plantilla CSV de ejemplo
+                </button>
               </div>
               <label class="import-dropzone" for="importFileInput" id="importDropzone">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>

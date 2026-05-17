@@ -2954,6 +2954,31 @@ body.nav-collapsed .nav-notif-panel {
   line-height: 1.5;
   margin-bottom: 14px;
 }
+
+.import-template-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  padding: 0 4px;
+}
+.import-template-link .link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--accent, #2563eb);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background .12s;
+}
+.import-template-link .link-btn:hover { background: rgba(37, 99, 235, 0.08); text-decoration: underline; }
 .import-help code {
   background: #fff;
   border: 1px solid var(--border);
