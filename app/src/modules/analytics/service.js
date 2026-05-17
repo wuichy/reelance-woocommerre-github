@@ -84,30 +84,45 @@ function getDashboardData(db, tenantId, { period = 'today', advisorId = null, is
   const byKind = {};
   for (const r of counts) byKind[r.kind] = r.n;
 
-  // Métricas derivadas también de tablas directas (más confiables que log)
-  // Mensajes salientes/entrantes en el período
+  // Métricas derivadas también de tablas directas (más confiables que log).
+  // Si advisorId está seteado, filtramos cada query por el asesor responsable.
+
+  // Mensajes salientes/entrantes en el período.
+  // Las messages se asocian al asesor vía: message → conversation → contact.assigned_advisor_id
+  const msgAdvFilter = effectiveAdvisorId
+    ? 'AND c.contact_id IN (SELECT id FROM contacts WHERE assigned_advisor_id = ? AND tenant_id = ?)'
+    : '';
+  const msgAdvParams = effectiveAdvisorId ? [effectiveAdvisorId, tenantId] : [];
   const messages = db.prepare(`
-    SELECT direction, COUNT(*) AS n
-      FROM messages
-     WHERE tenant_id = ? AND created_at BETWEEN ? AND ?
-     GROUP BY direction
-  `).all(tenantId, start, end);
+    SELECT m.direction, COUNT(*) AS n
+      FROM messages m
+      JOIN conversations c ON c.id = m.conversation_id
+     WHERE m.tenant_id = ? AND m.created_at BETWEEN ? AND ?
+     ${msgAdvFilter}
+     GROUP BY m.direction
+  `).all(tenantId, start, end, ...msgAdvParams);
   const messagesByDir = { incoming: 0, outgoing: 0 };
   for (const r of messages) messagesByDir[r.direction] = r.n;
 
-  // Contactos creados en el período (de la tabla directamente)
+  // Contactos creados en el período (filtrados por asesor asignado)
+  const contactAdvFilter = effectiveAdvisorId ? 'AND assigned_advisor_id = ?' : '';
+  const contactAdvParams = effectiveAdvisorId ? [effectiveAdvisorId] : [];
   const contactsCreated = db.prepare(`
     SELECT COUNT(*) AS n FROM contacts
      WHERE tenant_id = ? AND created_at BETWEEN ? AND ?
-  `).get(tenantId, start, end).n;
+     ${contactAdvFilter}
+  `).get(tenantId, start, end, ...contactAdvParams).n;
 
-  // Leads (expedients) creados en el período
+  // Leads (expedients) creados — filtrados por asesor asignado
+  const expAdvFilter = effectiveAdvisorId ? 'AND assigned_advisor_id = ?' : '';
+  const expAdvParams = effectiveAdvisorId ? [effectiveAdvisorId] : [];
   const leadsCreated = db.prepare(`
     SELECT COUNT(*) AS n FROM expedients
      WHERE tenant_id = ? AND created_at BETWEEN ? AND ?
-  `).get(tenantId, start, end).n;
+     ${expAdvFilter}
+  `).get(tenantId, start, end, ...expAdvParams).n;
 
-  // Leads ganados / perdidos (por kind de stage)
+  // Leads ganados / perdidos — filtrados por asesor asignado
   const leadOutcomes = db.prepare(`
     SELECT s.kind, COUNT(*) AS n
       FROM expedients e
@@ -115,20 +130,25 @@ function getDashboardData(db, tenantId, { period = 'today', advisorId = null, is
      WHERE e.tenant_id = ?
        AND e.updated_at BETWEEN ? AND ?
        AND s.kind IN ('won', 'lost')
+       ${effectiveAdvisorId ? 'AND e.assigned_advisor_id = ?' : ''}
      GROUP BY s.kind
-  `).all(tenantId, start, end);
+  `).all(tenantId, start, end, ...(effectiveAdvisorId ? [effectiveAdvisorId] : []));
   const outcomes = { won: 0, lost: 0 };
   for (const r of leadOutcomes) outcomes[r.kind] = r.n;
 
-  // Tareas creadas y completadas en el período
+  // Tareas — filtradas por asesor asignado
+  const taskAdvFilter = effectiveAdvisorId ? 'AND assigned_advisor_id = ?' : '';
+  const taskAdvParams = effectiveAdvisorId ? [effectiveAdvisorId] : [];
   const tasksCreated = db.prepare(`
     SELECT COUNT(*) AS n FROM tasks
      WHERE tenant_id = ? AND created_at BETWEEN ? AND ?
-  `).get(tenantId, start, end).n;
+     ${taskAdvFilter}
+  `).get(tenantId, start, end, ...taskAdvParams).n;
   const tasksCompleted = db.prepare(`
     SELECT COUNT(*) AS n FROM tasks
      WHERE tenant_id = ? AND completed = 1 AND completed_at BETWEEN ? AND ?
-  `).get(tenantId, start, end).n;
+     ${taskAdvFilter}
+  `).get(tenantId, start, end, ...taskAdvParams).n;
 
   // Breakdown por advisor (solo si admin pidió todo el equipo)
   let byAdvisor = null;
@@ -183,8 +203,9 @@ function getDashboardData(db, tenantId, { period = 'today', advisorId = null, is
         JOIN conversations c ON c.id = m.conversation_id
        WHERE m.tenant_id = ? AND m.direction = 'outgoing'
          AND m.created_at BETWEEN ? AND ?
-         AND m.status != 'failed'   -- los failed no cuentan para billing
-    `).get(tenantId, start, end);
+         AND m.status != 'failed'
+         ${effectiveAdvisorId ? 'AND c.contact_id IN (SELECT id FROM contacts WHERE assigned_advisor_id = ? AND tenant_id = ?)' : ''}
+    `).get(tenantId, start, end, ...(effectiveAdvisorId ? [effectiveAdvisorId, tenantId] : []));
     const conversations = conversationsRow?.n || 0;
     // Tarifa promedio aproximada — uso marketing rate como aproximación conservadora
     const RATE_USD_PER_CONV = 0.0432;
@@ -201,13 +222,20 @@ function getDashboardData(db, tenantId, { period = 'today', advisorId = null, is
 
   // Status de mensajes salientes (delivered / read / sent / failed)
   // — útil para medir calidad de entrega y diagnóstico WABA.
+  // Filtrado por asesor: vía conversation → contact.assigned_advisor_id
+  const statusAdvFilter = effectiveAdvisorId
+    ? 'AND c.contact_id IN (SELECT id FROM contacts WHERE assigned_advisor_id = ? AND tenant_id = ?)'
+    : '';
+  const statusAdvParams = effectiveAdvisorId ? [effectiveAdvisorId, tenantId] : [];
   const sentByStatus = db.prepare(`
-    SELECT status, COUNT(*) AS n
-      FROM messages
-     WHERE tenant_id = ? AND direction = 'outgoing'
-       AND created_at BETWEEN ? AND ?
-     GROUP BY status
-  `).all(tenantId, start, end);
+    SELECT m.status, COUNT(*) AS n
+      FROM messages m
+      JOIN conversations c ON c.id = m.conversation_id
+     WHERE m.tenant_id = ? AND m.direction = 'outgoing'
+       AND m.created_at BETWEEN ? AND ?
+       ${statusAdvFilter}
+     GROUP BY m.status
+  `).all(tenantId, start, end, ...statusAdvParams);
   const statusCounts = { sent: 0, delivered: 0, read: 0, failed: 0 };
   for (const r of sentByStatus) {
     if (statusCounts.hasOwnProperty(r.status)) statusCounts[r.status] = r.n;
@@ -215,15 +243,17 @@ function getDashboardData(db, tenantId, { period = 'today', advisorId = null, is
 
   // Top razones de fallo agrupadas (truncadas para agrupar variantes similares)
   const failureReasons = db.prepare(`
-    SELECT substr(error_reason, 1, 70) AS reason, COUNT(*) AS n
-      FROM messages
-     WHERE tenant_id = ? AND direction = 'outgoing' AND status = 'failed'
-       AND created_at BETWEEN ? AND ?
-       AND error_reason IS NOT NULL AND error_reason != ''
+    SELECT substr(m.error_reason, 1, 70) AS reason, COUNT(*) AS n
+      FROM messages m
+      JOIN conversations c ON c.id = m.conversation_id
+     WHERE m.tenant_id = ? AND m.direction = 'outgoing' AND m.status = 'failed'
+       AND m.created_at BETWEEN ? AND ?
+       AND m.error_reason IS NOT NULL AND m.error_reason != ''
+       ${statusAdvFilter}
      GROUP BY reason
      ORDER BY n DESC
      LIMIT 8
-  `).all(tenantId, start, end);
+  `).all(tenantId, start, end, ...statusAdvParams);
 
   return {
     period: { kind: period, start, end },
