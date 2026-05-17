@@ -11551,3 +11551,221 @@ body.personal-mode [data-view]:not([data-view="chats"]) {
   body .nav-item span:not(.nav-badge) { font-size: 9px; }
   .topbar-title { font-size: 14px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MOBILE — vista por vista
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* CHATS — patrón navegador: lista full-screen, al elegir chat slide-in panel */
+@media (max-width: 768px) {
+  .rh-shell {
+    grid-template-columns: 1fr;
+    position: relative;
+  }
+  .rh-sidebar {
+    width: 100%;
+    height: 100%;
+    border-right: none;
+  }
+  /* Panel de conversación oculto cuando está en empty state */
+  .rh-conversation-panel.rh-empty {
+    display: none;
+  }
+  /* Cuando hay chat seleccionado (no .rh-empty), mostrar panel encima del sidebar */
+  .rh-conversation-panel:not(.rh-empty) {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 10;
+    background: var(--rh-bg);
+  }
+  /* Cuando el panel está visible, ocultar el sidebar para evitar overflow detrás */
+  .rh-shell:has(.rh-conversation-panel:not(.rh-empty)) .rh-sidebar {
+    display: none;
+  }
+  .rh-conversation-header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .rh-mobile-back {
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    color: var(--text, #111);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .rh-mobile-back:hover { background: var(--bg-2, #f3f4f6); }
+  .rh-conversation-title { font-size: 14px; }
+  .rh-conversation-meta { font-size: 11px; }
+  /* Mensajes con margen reducido */
+  .rh-messages, #rhMessages { padding: 8px 10px; }
+  /* Bubble responsivas */
+  .msg-bubble, .rh-message-bubble { max-width: 86%; font-size: 14px; }
+  /* Footer del chat (input) — más compacto */
+  .rh-reply-form, .rh-composer {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  /* Search del chat en sidebar */
+  .rh-search-wrap input { font-size: 14px; }
+}
+/* Default: ocultar botón back en desktop */
+.rh-mobile-back { display: none; }
+
+/* PIPELINES — kanban scrollable + tabs sticky */
+@media (max-width: 768px) {
+  .pl-board {
+    padding: 8px;
+    gap: 8px;
+  }
+  .pl-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 8px;
+  }
+  .pl-tabs::-webkit-scrollbar { display: none; }
+  .pl-tab { flex-shrink: 0; }
+  /* Columnas del kanban — un poco más angostas */
+  .pl-col { min-width: 260px; max-width: 280px; }
+  .pl-col-title { font-size: 12px; }
+  .pl-card { padding: 10px; font-size: 12px; }
+  .pl-card-name { font-size: 13px; }
+  .pl-card-contact { font-size: 11px; }
+  /* Lista de pipeline (modo lista) — tabla scrolleable */
+  .pl-list-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .pl-list-table { min-width: 540px; }
+  .pl-list-bulkbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}
+
+/* LEAD DETAIL — split de 3 columnas → 1 columna stacked */
+@media (max-width: 768px) {
+  body[data-view-active="exp-detail"] .topbar { display: flex; padding: 4px 8px; }
+  .exp-detail-shell, .exp-detail-grid {
+    display: flex !important;
+    flex-direction: column;
+    grid-template-columns: none !important;
+    overflow-y: auto;
+  }
+  .exp-detail-left, .exp-detail-center, .exp-detail-right {
+    width: 100%;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+  }
+  .exp-detail-right .rh-conversation-panel {
+    height: 60vh; /* dale espacio fijo al chat dentro del detalle */
+  }
+  .exp-detail-back {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+}
+
+/* PLANTILLAS — cards stack vertical */
+@media (max-width: 768px) {
+  .tpl-layout { padding: 8px; max-width: none; }
+  .tpl-tabs { overflow-x: auto; scrollbar-width: none; }
+  .tpl-tabs::-webkit-scrollbar { display: none; }
+  .tpl-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 8px;
+  }
+  .tpl-card-icon-wrap { flex-direction: row; align-items: center; gap: 8px; }
+  .tpl-card-actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
+/* CONTACTOS — tabla scrolleable */
+@media (max-width: 768px) {
+  .customers-toolbar { flex-wrap: wrap; gap: 8px; padding: 8px; }
+  .customers-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .customers-table { min-width: 600px; font-size: 12px; }
+}
+
+/* BOT BUILDER — pasos vertical */
+@media (max-width: 768px) {
+  .bot-builder-topbar {
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+  .bot-builder-name-input { width: 100%; font-size: 14px; }
+  .bot-builder-topbar-right {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .bot-builder-body { padding: 12px 8px 80px; }
+  .bb-view-tabs { max-width: none; }
+  /* Lista de bots — full width cards */
+  .bot-list-row {
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto auto;
+    grid-template-areas: "name name" "trigger trigger" "actions actions" !important;
+    gap: 6px;
+    padding: 10px;
+  }
+  .bot-list-row > :nth-child(1) { grid-area: name; }
+  .bot-list-row > :nth-child(2) { grid-area: trigger; }
+  .bot-list-row > :nth-child(3) { display: none; }  /* steps count */
+  .bot-list-row > :nth-child(4) { grid-area: actions; justify-self: end; }
+  .bot-list-row > :nth-child(5) { grid-area: actions; justify-self: end; }
+  .bot-list-head { display: none; }
+}
+
+/* CALENDARIO — toolbar wrap */
+@media (max-width: 768px) {
+  .cal-toolbar { flex-wrap: wrap; gap: 6px; padding: 8px; }
+  .cal-sub-toggle { width: 100%; justify-content: center; }
+}
+
+/* PEDIDOS — cards stack */
+@media (max-width: 768px) {
+  .pedidos-toolbar { flex-wrap: wrap; gap: 8px; padding: 8px; }
+  .pedidos-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* ANALÍTICAS / DASHBOARD — grids a una columna */
+@media (max-width: 768px) {
+  .dashboard-grid, .stats-grid, .analytics-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+}
+
+/* MODALES — más espacio aprovechado en mobile */
+@media (max-width: 768px) {
+  .modal-card, .modal-card--md, .modal-card--lg {
+    max-width: calc(100vw - 24px) !important;
+    margin: 12px auto;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+  }
+  .modal-header { padding: 12px 14px; }
+  .modal-body { padding: 14px; }
+  .modal-footer { padding: 10px 14px; flex-wrap: wrap; gap: 6px; }
+}
+
+/* TOPBAR EXTRAS — botones de texto → solo iconos cuando es posible */
+@media (max-width: 480px) {
+  /* Hide labels of nav-style btns en topbar — solo iconos */
+  .topbar-pl-extras .pl-view-btn span:not(.nav-badge),
+  .topbar-actions .btn-label {
+    display: none;
+  }
+  .topbar-search input::placeholder {
+    font-size: 12px;
+  }
+}

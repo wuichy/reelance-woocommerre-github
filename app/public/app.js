@@ -13741,6 +13741,9 @@ function setupChatSearch() {
 // Empty state del panel de conversación cuando no hay chat abierto.
 function renderChatEmptyState() {
   document.getElementById('rhConvPanel')?.classList.add('rh-empty');
+  ACTIVE_CONVO_ID = null;
+  // Quitar el highlight 'rh-active' de la lista
+  document.querySelectorAll('.rh-chat-item.rh-active').forEach(el => el.classList.remove('rh-active'));
   const root = document.getElementById('rhMessages');
   if (!root) return;
   root.innerHTML = `
@@ -13750,6 +13753,11 @@ function renderChatEmptyState() {
       <p>Elige un chat del inbox para ver los mensajes y responder.</p>
     </div>`;
 }
+
+// Botón back en mobile (solo visible <=768px via CSS) — vuelve al listado
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('rhMobileBack')?.addEventListener('click', renderChatEmptyState);
+});
 
 // ─── Banner de activación de notificaciones push en /chats ───
 // Aparece dentro del inbox cuando: el navegador soporta push, no hay subscripción
