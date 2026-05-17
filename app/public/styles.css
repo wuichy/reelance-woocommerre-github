@@ -11833,19 +11833,40 @@ body.personal-mode [data-view]:not([data-view="chats"]) {
     flex-direction: column;
     grid-template-columns: none !important;
     overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
   }
   .exp-detail-left, .exp-detail-center, .exp-detail-right {
     width: 100%;
     border-right: none !important;
     border-bottom: 1px solid var(--border, #e5e7eb);
+    overflow: visible !important; /* sin esto las cards se cortan */
+    height: auto !important;
+    flex: none !important;
   }
+  /* La info del lead — quitar overflow auto y flex:1 (heredados de desktop) */
+  .exp-detail-info {
+    overflow: visible !important;
+    flex: none !important;
+    padding: 12px;
+    gap: 12px;
+  }
+  /* Cada sección con padding razonable */
+  .exp-detail-section { padding: 10px 12px; }
+  .exp-detail-section h3 { font-size: 11px; }
+  /* Las filas de info row: label + value verticales si no caben */
+  .ed-row, .exp-detail-row { gap: 4px; }
+  /* El chat dentro del detalle */
   .exp-detail-right .rh-conversation-panel {
-    height: 60vh; /* dale espacio fijo al chat dentro del detalle */
+    height: 60vh;
+    flex: none !important;
   }
   .exp-detail-back {
     padding: 6px 10px;
     font-size: 13px;
   }
+  /* Topbar del detalle más compacto */
+  .exp-detail-topbar { padding: 8px 12px; }
 }
 
 /* PLANTILLAS — cards stack vertical */
