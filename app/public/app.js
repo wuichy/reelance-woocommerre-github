@@ -3675,6 +3675,47 @@ function renderDashboard(d) {
   set('dashConvos', fmt(m.leadsWon || 0));
   set('dashConvosUnread', `${fmt(m.leadsLost || 0)} perdidos · ${fmt(m.tasksCompleted || 0)} tareas hechas`);
 
+  // Calidad de entrega — solo si hubo envíos
+  const status = d.deliveryStatus || {};
+  const delivered = (status.delivered || 0) + (status.read || 0);
+  const failed    = status.failed || 0;
+  const pending   = status.sent || 0; // sent sin webhook delivered todavía
+  const totalAttempted = delivered + failed + pending;
+  const dCard = document.getElementById('dashDeliveryCard');
+  if (dCard) {
+    if (totalAttempted === 0) {
+      dCard.hidden = true;
+    } else {
+      dCard.hidden = false;
+      const successPct = totalAttempted > 0 ? Math.round((delivered / totalAttempted) * 100) : 0;
+      set('dashDeliverySuccessRate', `${successPct}%`);
+      set('dashDeliveryDelivered', fmt(delivered));
+      set('dashDeliveryPending', fmt(pending));
+      set('dashDeliveryFailed', fmt(failed));
+      // Lista de razones de fallo
+      const failures = Array.isArray(d.deliveryFailures) ? d.deliveryFailures : [];
+      const failuresWrap = document.getElementById('dashDeliveryFailures');
+      const failuresList = document.getElementById('dashDeliveryFailuresList');
+      if (failuresWrap && failuresList) {
+        if (failures.length === 0) {
+          failuresWrap.hidden = true;
+        } else {
+          failuresWrap.hidden = false;
+          failuresList.innerHTML = failures.map(f => {
+            const pct = failed > 0 ? Math.round((f.n / failed) * 100) : 0;
+            return `<li class="dash-delivery-failure-item">
+              <div class="dash-delivery-failure-bar" style="--pct:${pct}%"></div>
+              <div class="dash-delivery-failure-info">
+                <span class="dash-delivery-failure-reason">${escapeHtml(f.reason)}</span>
+                <span class="dash-delivery-failure-count">${fmt(f.n)} (${pct}%)</span>
+              </div>
+            </li>`;
+          }).join('');
+        }
+      }
+    }
+  }
+
   // Breakdown por advisor (solo admin sin filtro)
   const teamCard = document.getElementById('dashTeamCard');
   const teamBody = document.getElementById('dashTeamTbody');

@@ -743,6 +743,36 @@
             </div>
           </div>
 
+          <!-- Calidad de entrega — solo si hubo envíos en el período -->
+          <div class="dash-delivery-card" id="dashDeliveryCard" hidden>
+            <div class="dash-delivery-header">
+              <h3>Calidad de entrega de mensajes</h3>
+              <p class="dash-delivery-sub">Salud de tu WhatsApp Business API. Si el % de éxito baja del 80%, revisa tu calidad de WABA en Meta Business Manager.</p>
+            </div>
+            <div class="dash-delivery-summary">
+              <div class="dash-delivery-stat dash-delivery-stat--success">
+                <span class="dash-delivery-value" id="dashDeliverySuccessRate">—</span>
+                <span class="dash-delivery-label">% éxito de entrega</span>
+              </div>
+              <div class="dash-delivery-stat">
+                <span class="dash-delivery-value" id="dashDeliveryDelivered">—</span>
+                <span class="dash-delivery-label">Entregados</span>
+              </div>
+              <div class="dash-delivery-stat">
+                <span class="dash-delivery-value" id="dashDeliveryPending">—</span>
+                <span class="dash-delivery-label">En camino</span>
+              </div>
+              <div class="dash-delivery-stat dash-delivery-stat--failed">
+                <span class="dash-delivery-value" id="dashDeliveryFailed">—</span>
+                <span class="dash-delivery-label">Fallaron</span>
+              </div>
+            </div>
+            <div class="dash-delivery-failures" id="dashDeliveryFailures" hidden>
+              <h4>¿Por qué fallaron?</h4>
+              <ul class="dash-delivery-failures-list" id="dashDeliveryFailuresList"></ul>
+            </div>
+          </div>
+
           <!-- Gráfica semanal -->
           <div class="dash-chart-card">
             <div class="dash-chart-header">

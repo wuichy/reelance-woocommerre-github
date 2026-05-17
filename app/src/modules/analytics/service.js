@@ -158,6 +158,32 @@ function getDashboardData(db, tenantId, { period = 'today', advisorId = null, is
     `).all(start, end, start, end, start, end, start, end, tenantId);
   }
 
+  // Status de mensajes salientes (delivered / read / sent / failed)
+  // — útil para medir calidad de entrega y diagnóstico WABA.
+  const sentByStatus = db.prepare(`
+    SELECT status, COUNT(*) AS n
+      FROM messages
+     WHERE tenant_id = ? AND direction = 'outgoing'
+       AND created_at BETWEEN ? AND ?
+     GROUP BY status
+  `).all(tenantId, start, end);
+  const statusCounts = { sent: 0, delivered: 0, read: 0, failed: 0 };
+  for (const r of sentByStatus) {
+    if (statusCounts.hasOwnProperty(r.status)) statusCounts[r.status] = r.n;
+  }
+
+  // Top razones de fallo agrupadas (truncadas para agrupar variantes similares)
+  const failureReasons = db.prepare(`
+    SELECT substr(error_reason, 1, 70) AS reason, COUNT(*) AS n
+      FROM messages
+     WHERE tenant_id = ? AND direction = 'outgoing' AND status = 'failed'
+       AND created_at BETWEEN ? AND ?
+       AND error_reason IS NOT NULL AND error_reason != ''
+     GROUP BY reason
+     ORDER BY n DESC
+     LIMIT 8
+  `).all(tenantId, start, end);
+
   return {
     period: { kind: period, start, end },
     metrics: {
@@ -167,9 +193,14 @@ function getDashboardData(db, tenantId, { period = 'today', advisorId = null, is
       leadsLost: outcomes.lost,
       messagesSent: messagesByDir.outgoing,
       messagesReceived: messagesByDir.incoming,
+      messagesDelivered: statusCounts.delivered + statusCounts.read,
+      messagesFailed: statusCounts.failed,
+      messagesPending: statusCounts.sent, // sent sin webhook de delivered todavía
       tasksCreated,
       tasksCompleted,
     },
+    deliveryStatus: statusCounts,
+    deliveryFailures: failureReasons,
     byKind,
     byAdvisor,
   };
