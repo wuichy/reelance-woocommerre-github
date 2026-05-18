@@ -2311,6 +2311,10 @@ Ana, , ana@hotmail.com, 5551112222</pre>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
               <span>Papelera</span>
             </button>
+            <button class="settings-tab" data-settings="respaldos" data-admin-only>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3"/><polyline points="21 4 21 10 15 10"/></svg>
+              <span>Respaldos</span>
+            </button>
             <button class="settings-tab" data-settings="configuraciones" data-i18n="settings.tab.configuraciones">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="13" y2="6"/><line x1="17" y1="6" x2="20" y2="6"/><circle cx="15" cy="6" r="2"/><line x1="4" y1="12" x2="7" y2="12"/><line x1="11" y1="12" x2="20" y2="12"/><circle cx="9" cy="12" r="2"/><line x1="4" y1="18" x2="15" y2="18"/><line x1="19" y1="18" x2="20" y2="18"/><circle cx="17" cy="18" r="2"/></svg>
               <span>Ajustes</span>
@@ -2696,6 +2700,31 @@ Ana, , ana@hotmail.com, 5551112222</pre>
                     <div class="apps-loading">Cargando apps...</div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- ─── Respaldos ─── -->
+            <div class="settings-pane" data-settings="respaldos">
+              <div class="settings-head">
+                <div>
+                  <h2>💾 Respaldos de tus datos</h2>
+                  <p>Respaldos encriptados que contienen <strong>solo los datos de tu cuenta</strong>. Se hacen automáticamente el día 1 de cada mes, y puedes crear manuales cuando quieras. Solo se guardan los <strong>3 más recientes de cada tipo</strong>.</p>
+                </div>
+                <button class="btn btn--primary" id="createBackupBtn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:6px;vertical-align:-2px"><path d="M21 12.79A9 9 0 1 1 11.21 3"/><polyline points="21 4 21 10 15 10"/></svg>
+                  Crear respaldo ahora
+                </button>
+              </div>
+
+              <div class="bk-info-box">
+                <strong>🔐 ¿Cómo funcionan?</strong>
+                Cada respaldo se encripta con AES-256 (estándar militar). El archivo descargado tiene extensión <code>.gpg</code> y solo se puede abrir con la passphrase del sistema. Si necesitas restaurar uno, contacta soporte con el archivo descargado.
+              </div>
+
+              <div id="backupsCounts" class="bk-counts"></div>
+
+              <div class="bk-list" id="backupsList">
+                <p class="bk-empty">Cargando respaldos…</p>
               </div>
             </div>
 

@@ -8707,6 +8707,84 @@ mark.rh-chat-hl { background: #fef08a; border-radius: 2px; padding: 0 1px; color
   .dash-cost-detail { grid-template-columns: 1fr; }
 }
 
+/* ─── Respaldos (Settings > Respaldos) ─── */
+.bk-info-box {
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.18);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.55;
+  margin-bottom: 16px;
+}
+.bk-info-box strong { display: block; margin-bottom: 4px; }
+.bk-info-box code {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 11px;
+}
+.bk-counts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.bk-count-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  background: var(--bg-2, #f9fafb);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.bk-count-label { font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.bk-count-value { font-size: 18px; font-weight: 700; color: var(--text); }
+.bk-list { display: flex; flex-direction: column; gap: 8px; }
+.bk-empty { text-align: center; padding: 24px 0; color: var(--text-muted); font-size: 13px; }
+.bk-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: box-shadow .12s;
+}
+.bk-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+.bk-item-main { flex: 1; min-width: 0; }
+.bk-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.bk-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.bk-badge--manual  { background: #dbeafe; color: #1e40af; }
+.bk-badge--monthly { background: #fef3c7; color: #78350f; }
+.bk-item-date { font-size: 12px; color: var(--text); font-weight: 500; }
+.bk-item-meta { font-size: 11px; color: var(--text-muted); }
+.bk-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .bk-counts { grid-template-columns: 1fr; }
+  .bk-item { flex-direction: column; align-items: stretch; gap: 8px; }
+  .bk-item-actions { justify-content: flex-end; }
+}
+
 /* ─── Calidad de entrega ─── */
 .dash-delivery-card {
   background: var(--bg);

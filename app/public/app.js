@@ -4174,6 +4174,7 @@ function setupSettingsTabs() {
       // En mobile: cambiar a vista de detalle (oculta lista, muestra contenido)
       if (shell) shell.classList.add('is-detail-mode');
       if (target === 'papelera') loadTrash();
+      if (target === 'respaldos') loadBackups();
       if (target === 'tokens-maquina') loadMachineTokens();
       if (target === 'reportes') loadReports();
       if (target === 'negocio') loadBusinessHours();
@@ -21988,3 +21989,126 @@ function setupWooEvents() {
     finally { btn.disabled = false; btn.textContent = '🔍 Verificar plugin'; }
   });
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// RESPALDOS (Settings > Respaldos)
+// ═════════════════════════════════════════════════════════════════════
+
+async function loadBackups() {
+  const list = document.getElementById('backupsList');
+  const countsEl = document.getElementById('backupsCounts');
+  if (!list) return;
+  list.innerHTML = '<p class="bk-empty">Cargando respaldos…</p>';
+  try {
+    const data = await api('GET', '/api/backups');
+    const items = data.items || [];
+    const limits = data.limits || { manual: 3, monthly: 3 };
+    const counts = data.counts || { manual: 0, monthly: 0 };
+    if (countsEl) {
+      countsEl.innerHTML = `
+        <div class="bk-count-card">
+          <span class="bk-count-label">📝 Manuales</span>
+          <span class="bk-count-value">${counts.manual} / ${limits.manual}</span>
+        </div>
+        <div class="bk-count-card">
+          <span class="bk-count-label">🗓️ Mensuales</span>
+          <span class="bk-count-value">${counts.monthly} / ${limits.monthly}</span>
+        </div>
+      `;
+    }
+    if (!items.length) {
+      list.innerHTML = '<p class="bk-empty">Aún no tienes respaldos. Crea uno con el botón arriba.</p>';
+      return;
+    }
+    list.innerHTML = items.map(b => {
+      const sizeKb = (b.sizeBytes / 1024).toFixed(0);
+      const sizeMb = (b.sizeBytes / 1024 / 1024).toFixed(1);
+      const sizeStr = b.sizeBytes >= 1024 * 1024 ? `${sizeMb} MB` : `${sizeKb} KB`;
+      const date = new Date(b.createdAt * 1000).toLocaleString('es-MX', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+      });
+      const typeLabel = b.type === 'manual' ? '📝 Manual' : '🗓️ Mensual';
+      const typeClass = b.type === 'manual' ? 'bk-badge--manual' : 'bk-badge--monthly';
+      return `
+        <div class="bk-item">
+          <div class="bk-item-main">
+            <div class="bk-item-header">
+              <span class="bk-badge ${typeClass}">${typeLabel}</span>
+              <span class="bk-item-date">${date}</span>
+            </div>
+            <div class="bk-item-meta">${escHtml(b.filename)} · ${sizeStr}</div>
+          </div>
+          <div class="bk-item-actions">
+            <a class="btn btn--ghost btn--sm" href="/api/backups/${b.id}/download" download title="Descargar (necesitas pasaprhase del sistema para abrirlo)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </a>
+            <button class="btn btn--danger-ghost btn--sm" data-bk-del="${b.id}" title="Eliminar respaldo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    // Wire delete buttons
+    list.querySelectorAll('[data-bk-del]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.bkDel;
+        if (!confirm('¿Eliminar este respaldo? No se puede recuperar.')) return;
+        try {
+          await api('DELETE', `/api/backups/${id}`);
+          toast('Respaldo eliminado', 'success');
+          loadBackups();
+        } catch (e) { toast(e.message, 'error'); }
+      });
+    });
+    // Descarga necesita auth header — interceptar el click y hacer fetch con token
+    list.querySelectorAll('a[href^="/api/backups/"]').forEach(a => {
+      a.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          const url = a.getAttribute('href');
+          const resp = await fetch(url, { headers: { Authorization: `Bearer ${getToken()}` } });
+          if (!resp.ok) throw new Error('Descarga falló');
+          const blob = await resp.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          const dispoHeader = resp.headers.get('content-disposition') || '';
+          const fileMatch = dispoHeader.match(/filename="([^"]+)"/);
+          const downloadName = fileMatch ? fileMatch[1] : 'wapi101-respaldo.tar.gz.gpg';
+          const tempA = document.createElement('a');
+          tempA.href = objectUrl;
+          tempA.download = downloadName;
+          document.body.appendChild(tempA);
+          tempA.click();
+          document.body.removeChild(tempA);
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+        } catch (err) {
+          toast('Error descargando: ' + err.message, 'error');
+        }
+      });
+    });
+  } catch (err) {
+    list.innerHTML = `<p class="bk-empty" style="color:#dc2626">Error: ${err.message}</p>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('createBackupBtn')?.addEventListener('click', async () => {
+    const btn = document.getElementById('createBackupBtn');
+    if (!btn) return;
+    if (!confirm('¿Crear un respaldo ahora? Tardará unos segundos.')) return;
+    btn.disabled = true;
+    const original = btn.innerHTML;
+    btn.innerHTML = '⏳ Creando respaldo…';
+    try {
+      const r = await api('POST', '/api/backups');
+      toast(`Respaldo creado (${(r.item.sizeBytes / 1024 / 1024).toFixed(1)} MB)`, 'success', 5000);
+      loadBackups();
+    } catch (err) {
+      toast('Error: ' + err.message, 'error', 8000);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = original;
+    }
+  });
+});

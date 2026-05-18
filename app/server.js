@@ -754,6 +754,7 @@ mountSafe('/api/business',           require('./src/modules/business/routes'));
 mountSafe('/api/appointments',       require('./src/modules/appointments/routes'));
 mountSafe('/api/apps',               require('./src/modules/apps/routes'));
 mountSafe('/api/jobs',               require('./src/modules/jobs/routes'));
+mountSafe('/api/backups',            require('./src/modules/backups/routes'));
 const { authRouter: wooAuthRouter }  = require('./src/modules/woo/routes');
 app.use('/api/apps/woo', wooAuthRouter(db));
 
