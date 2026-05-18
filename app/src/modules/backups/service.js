@@ -177,11 +177,30 @@ async function createTenantBackup(db, tenantId, { type = 'manual', advisorId = n
     // 5. Aplicar retention (borrar viejos si excedemos MAX_PER_TYPE)
     enforceRetention(db, tenantId, type);
 
+    // 6. Offsite a Cloudflare R2 si está configurado (no bloquea si falla)
+    let r2 = { skipped: true };
+    try {
+      const { uploadToR2, isR2Configured } = require('./r2-upload');
+      if (isR2Configured()) {
+        const objectKey = `tenant-backups/tenant-${tenantId}/${encryptedName}`;
+        r2 = await uploadToR2(encryptedPath, objectKey);
+        if (r2.ok) {
+          console.log(`[backups] R2 upload OK: ${objectKey}`);
+        } else if (!r2.skipped) {
+          console.warn(`[backups] R2 upload FALLÓ: ${r2.error || r2.status}`);
+        }
+      }
+    } catch (e) {
+      console.warn(`[backups] R2 upload error: ${e.message}`);
+      r2 = { ok: false, error: e.message };
+    }
+
     return {
       id: result.lastInsertRowid,
       tenantId, type, filename: encryptedName,
       sizeBytes: size,
       createdAt: Math.floor(Date.now() / 1000),
+      offsite: r2.ok ? 'uploaded' : (r2.skipped ? 'not_configured' : 'failed'),
     };
   } finally {
     // Cleanup de archivos temporales (plaintext). SIEMPRE — aunque haya error.
@@ -236,6 +255,46 @@ function getBackupPath(db, tenantId, backupId) {
   return { path: resolved, filename: row.filename };
 }
 
+// Helper: borra del bucket R2 (best-effort, no falla la operación si R2 falla)
+async function _deleteFromR2(tenantId, filename) {
+  try {
+    const { isR2Configured } = require('./r2-upload');
+    if (!isR2Configured()) return;
+    const r2env = require('fs').readFileSync('/root/.wapi101/r2.env', 'utf8');
+    const env = {};
+    for (const line of r2env.split('\n')) {
+      const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/);
+      if (m) env[m[1]] = m[2];
+    }
+    const objectKey = `tenant-backups/tenant-${tenantId}/${filename}`;
+    const cryptoMod = require('crypto');
+    const host = `${env.CF_R2_ACCOUNT_ID}.r2.cloudflarestorage.com`;
+    const now = new Date();
+    const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
+    const dateStamp = amzDate.slice(0, 8);
+    const emptyHash = cryptoMod.createHash('sha256').update('').digest('hex');
+    const canonicalReq = ['DELETE', `/${env.CF_R2_BUCKET}/${objectKey}`, '',
+      `host:${host}\nx-amz-content-sha256:${emptyHash}\nx-amz-date:${amzDate}\n`,
+      'host;x-amz-content-sha256;x-amz-date', emptyHash].join('\n');
+    const crHash = cryptoMod.createHash('sha256').update(canonicalReq).digest('hex');
+    const scope = `${dateStamp}/auto/s3/aws4_request`;
+    const stringToSign = ['AWS4-HMAC-SHA256', amzDate, scope, crHash].join('\n');
+    const kDate    = cryptoMod.createHmac('sha256', 'AWS4' + env.CF_R2_SECRET_KEY).update(dateStamp).digest();
+    const kRegion  = cryptoMod.createHmac('sha256', kDate).update('auto').digest();
+    const kService = cryptoMod.createHmac('sha256', kRegion).update('s3').digest();
+    const kSigning = cryptoMod.createHmac('sha256', kService).update('aws4_request').digest();
+    const sig = cryptoMod.createHmac('sha256', kSigning).update(stringToSign).digest('hex');
+    const auth = `AWS4-HMAC-SHA256 Credential=${env.CF_R2_ACCESS_KEY}/${scope}, SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature=${sig}`;
+    const { spawnSync } = require('child_process');
+    spawnSync('curl', ['-sS', '-X', 'DELETE', `https://${host}/${env.CF_R2_BUCKET}/${objectKey}`,
+      '-H', `Host: ${host}`, '-H', `X-Amz-Date: ${amzDate}`,
+      '-H', `X-Amz-Content-Sha256: ${emptyHash}`, '-H', `Authorization: ${auth}`,
+      '--max-time', '30'], { stdio: 'pipe' });
+  } catch (e) {
+    console.warn(`[backups] R2 delete error: ${e.message}`);
+  }
+}
+
 function deleteTenantBackup(db, tenantId, backupId) {
   _validateTenantId(tenantId);
   if (!Number.isInteger(backupId) || backupId <= 0) return false;
@@ -251,6 +310,8 @@ function deleteTenantBackup(db, tenantId, backupId) {
     if (resolved.startsWith(path.resolve(dir) + path.sep)) {
       try { if (fs.existsSync(resolved)) fs.unlinkSync(resolved); } catch (_) {}
     }
+    // Eliminar también del offsite (R2) — async fire-and-forget
+    _deleteFromR2(tenantId, row.filename).catch(() => {});
   }
   db.prepare(`DELETE FROM tenant_backups WHERE id = ? AND tenant_id = ?`).run(backupId, tenantId);
   return true;
@@ -276,6 +337,8 @@ function enforceRetention(db, tenantId, type) {
       if (resolved.startsWith(path.resolve(dir) + path.sep)) {
         try { if (fs.existsSync(resolved)) fs.unlinkSync(resolved); } catch (_) {}
       }
+      // Eliminar del offsite también
+      _deleteFromR2(tenantId, r.filename).catch(() => {});
     }
     db.prepare(`DELETE FROM tenant_backups WHERE id = ?`).run(r.id);
   }
